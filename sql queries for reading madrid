@@ -1,0 +1,74 @@
+CREATE VIEW places_country_people_myth AS
+SELECT places.placeref,
+GROUP_CONCAT(people.persref SEPARATOR ',') mythpersrefs, 
+GROUP_CONCAT(COALESCE(people.persepithet, IF(perslastname <> '',concat(people.persfirstname,' ', people.perslastname),people.persfirstname)) SEPARATOR ', ') mythpeoplenames,
+GROUP_CONCAT('<a href=""http://45.56.98.26:8080/exist/rest/db/madrid/xml/tds-people.xml#',people.persref,'""  target=""myiframe"" onclick=""Shiny.onInputChange(\'linkclickpeople\',  Math.random())"">',COALESCE(people.persepithet, IF(perslastname <> '',concat(people.persfirstname,' ', people.perslastname),people.persfirstname)),'</a>' SEPARATOR ', ') mythpeoplelinks 
+
+FROM places
+
+
+left JOIN people ON people.perscountry like concat('%',places.placeref,'%')  and (people.perstype like '%religious%' or people.perstype like '%mythological%')  and places.placeref <>''
+
+where placearea<>'' and people.persworks LIKE '%OBRATDS%'
+GROUP BY places.placeref
+
+========================
+
+CREATE VIEW places_country_people_hist AS
+SELECT places.placeref,
+GROUP_CONCAT(people.persref SEPARATOR ',') histpersrefs, 
+GROUP_CONCAT(COALESCE(people.persepithet, IF(perslastname <> '',concat(people.persfirstname,' ', people.perslastname),people.persfirstname)) SEPARATOR ', ') histpeoplenames,
+GROUP_CONCAT('<a href=""http://45.56.98.26:8080/exist/rest/db/madrid/xml/tds-people.xml#',people.persref,'""  target=""myiframe"" onclick=""Shiny.onInputChange(\'linkclickpeople\',  Math.random())"">',COALESCE(people.persepithet, IF(perslastname <> '',concat(people.persfirstname,' ', people.perslastname),people.persfirstname)),'</a>' SEPARATOR ', ') histpeoplelinks 
+
+FROM places
+
+
+left JOIN people ON people.perscountry like concat('%',places.placeref,'%')  and (people.perstype like '%historic%') and places.placeref <>''
+
+where placearea<>'' and people.persworks LIKE '%OBRATDS%'
+GROUP BY places.placeref
+
+========================
+
+CREATE VIEW places_country_obras AS
+SELECT places.placeref,
+GROUP_CONCAT(worksreferenced.workref SEPARATOR ',') workrefs, 
+GROUP_CONCAT(worksreferenced.workname SEPARATOR ', ') worknames,
+GROUP_CONCAT('<a href=""http://45.56.98.26:8080/exist/rest/db/madrid/xml/tds-works.xml#',worksreferenced.workref,'""  target=""myiframe3"" onclick=""Shiny.onInputChange(\'linkclickworks\',  Math.random())"">',worksreferenced.workname,'</a>' SEPARATOR ', ') worklinks 
+
+FROM places
+
+
+left JOIN worksreferenced ON worksreferenced.workcountry like concat('%',places.placeref,'%')  and places.placeref <>''
+
+where placearea<>'' and worksreferenced.workworks LIKE '%OBRATDS%' and worksreferenced.workomit =0
+GROUP BY places.placeref
+
+========================
+
+CREATE VIEW places_points AS
+SELECT placeref, placename,placepointcoords,placetype,placeworks,placeapprx,placeplace
+FROM places
+WHERE placepointcoords<>''
+order by placeapprx
+
+=========================
+
+CREATE VIEW places_paths_split AS
+SELECT placeref,placename,placepath,placetype,placeworks,placeapprx, LENGTH(placeworks) - LENGTH(REPLACE(placeworks, ',', '')) + 1 numworks, SUBSTRING_INDEX(SUBSTRING_INDEX(t.placeworks, ',', n.n), ',', -1) placework
+  FROM places t CROSS JOIN 
+(
+   SELECT a.N + b.N * 10 + 1 n
+     FROM 
+    (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a
+   ,(SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
+    ORDER BY n
+) n
+ WHERE placepath<>'' AND n.n <= 1 + (LENGTH(t.placeworks) - LENGTH(REPLACE(t.placeworks, ',', ''))) 
+ ORDER BY placerefCREATE VIEW places_points AS
+SELECT placeref, placename,placepointcoords,placetype,placeworks,placeapprx,placeplace
+FROM places
+WHERE placepointcoords<>''
+order by placeapprx
+
+
